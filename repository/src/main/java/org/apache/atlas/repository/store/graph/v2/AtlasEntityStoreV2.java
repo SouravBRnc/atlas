@@ -1244,6 +1244,12 @@ public class AtlasEntityStoreV2 implements AtlasEntityStore {
                     throw new AtlasBaseException(AtlasErrorCode.TYPE_NAME_INVALID, TypeCategory.ENTITY.name(), entity.getTypeName());
                 }
 
+                String accountID = requestContext.getAccountID();
+                if(!StringUtils.isEmpty(requestContext.getAccountID())) {
+                    LOG.info("setting accountID : "+ accountID);
+                    entity.setAttribute("accountID", accountID);
+                }
+
                 compactAttributes(entity, entityType);
 
                 AtlasVertex vertex = getResolvedEntityVertex(discoveryContext, entity);

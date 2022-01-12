@@ -65,6 +65,7 @@ public class RequestContext {
     private final List<AtlasTask>                        queuedTasks          = new ArrayList<>();
 
 
+    private String accountID;
     private String       user;
     private Set<String>  userGroups;
     private String       clientIPAddress;
@@ -248,6 +249,14 @@ public class RequestContext {
 
     public void setCurrentTypePatchAction(String currentTypePatchAction) {
         this.currentTypePatchAction = currentTypePatchAction;
+    }
+
+    public String getAccountID() {
+        return accountID;
+    }
+
+    public void setAccountID(String accountID) {
+        this.accountID = accountID;
     }
 
     public void recordEntityUpdate(AtlasEntityHeader entity) {

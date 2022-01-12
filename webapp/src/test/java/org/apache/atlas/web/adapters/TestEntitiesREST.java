@@ -177,7 +177,7 @@ public class TestEntitiesREST {
 
         searchParameters.setEntityFilters(filter);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
 
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
@@ -190,7 +190,7 @@ public class TestEntitiesREST {
         searchParameters.setIncludeSubClassifications(true);
         searchParameters.setClassification(TestUtilsV2.CLASSIFICATION);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
     }
@@ -216,7 +216,7 @@ public class TestEntitiesREST {
         fc.setCondition(AND);
         searchParameters.setEntityFilters(fc);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertTrue(res.getEntities().size() > 5);
     }
@@ -228,34 +228,34 @@ public class TestEntitiesREST {
         searchParameters = new SearchParameters();
 
         searchParameters.setClassification("*");
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         searchParameters.setClassification("_CLASSIFIED");
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         // Test wildcard usage of basic search
         searchParameters.setClassification("cl*");
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         searchParameters.setClassification("*ion");
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         searchParameters.setClassification("*l*");
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         searchParameters.setClassification("_NOT_CLASSIFIED");
         searchParameters.setTypeName(DATABASE_TYPE);
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
     }
@@ -266,7 +266,7 @@ public class TestEntitiesREST {
         searchParameters.setClassification("cla*");
         searchParameters.setTypeName(TABLE_TYPE);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
 
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
@@ -285,7 +285,7 @@ public class TestEntitiesREST {
         searchParameters.setClassification(PHI);
         searchParameters.setTagFilters(filterCriteria);
 
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
@@ -293,12 +293,12 @@ public class TestEntitiesREST {
         filterCriteria.setOperator(SearchParameters.Operator.EQ);
         filterCriteria.setAttributeValue("sample_string");
 
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         filterCriteria.setAttributeValue("SAMPLE_STRING");
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNull(res.getEntities());
     }
 
@@ -311,7 +311,7 @@ public class TestEntitiesREST {
         searchParameters.setClassification(TestUtilsV2.CLASSIFICATION);
         searchParameters.setIncludeSubClassifications(true);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
 
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
@@ -326,13 +326,13 @@ public class TestEntitiesREST {
         Assert.assertEquals(result_tag.getTypeName(), FETL_CLASSIFICATION);
 
         // basic search with subtypes
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 3);
 
         // basic search without subtypes
         searchParameters.setIncludeSubClassifications(false);
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
 
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
@@ -354,7 +354,7 @@ public class TestEntitiesREST {
         fc.setAttributeValue("true");
 
         searchParameters.setTagFilters(fc);
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
         Assert.assertEquals(res.getEntities().get(0).getTypeName(), COLUMN_TYPE);
@@ -376,7 +376,7 @@ public class TestEntitiesREST {
         // database - fetl_classification
         // column - phi
         fc.setAttributeValue("false");
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
 
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
@@ -410,13 +410,13 @@ public class TestEntitiesREST {
         fc.setCondition(AND);
         searchParameters.setEntityFilters(fc);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         subFc2.setAttributeValue(FETL_CLASSIFICATION);
 
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
     }
@@ -434,16 +434,16 @@ public class TestEntitiesREST {
         searchParameters.setTermName(term1.getName() + "@testSearchGlossary");
         searchParameters.setClassification(CLASSIFICATION);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         searchParameters.setClassification(PII);
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNull(res.getEntities());
 
         searchParameters.setClassification(PHI);
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
     }
@@ -464,21 +464,21 @@ public class TestEntitiesREST {
 
         searchParameters.setEntityFilters(fc);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
         fc.setOperator(SearchParameters.Operator.CONTAINS);
         fc.setAttributeValue("cla");
 
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 3);
 
         fc.setOperator(SearchParameters.Operator.CONTAINS);
         fc.setAttributeValue(PHI);
 
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 4);
     }
@@ -500,15 +500,15 @@ public class TestEntitiesREST {
 
         searchParameters.setTagFilters(fc);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNull(res.getEntities());
 
         fc.setOperator(SearchParameters.Operator.ENDS_WITH);
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNull(res.getEntities());
 
         fc.setOperator(SearchParameters.Operator.STARTS_WITH);
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNull(res.getEntities());
     }
 
@@ -530,7 +530,7 @@ public class TestEntitiesREST {
 
         entityREST.deleteByGuid(createdGuids.get(DATABASE_TYPE).get(0));
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
 
@@ -539,7 +539,7 @@ public class TestEntitiesREST {
         fc.setOperator(SearchParameters.Operator.EQ);
         fc.setAttributeValue(TABLE_TYPE);
 
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 2);
 
@@ -550,7 +550,7 @@ public class TestEntitiesREST {
         fc.setAttributeValue("DELETED");
 
         searchParameters.setEntityFilters(fc);
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNull(res.getEntities());
     }
 
@@ -580,7 +580,7 @@ public class TestEntitiesREST {
         searchParameters.setEntityFilters(fc);
         searchParameters.setQuery("sample_string");
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
 
@@ -588,7 +588,7 @@ public class TestEntitiesREST {
         searchParameters.setQuery("classification");
         searchParameters.setClassification(PHI);
 
-        res = discoveryREST.searchWithParameters(searchParameters);
+        res = discoveryREST.searchWithParameters(searchParameters, "account-id");
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 1);
     }
@@ -618,7 +618,7 @@ public class TestEntitiesREST {
 
         searchParameters.setTagFilters(fc);
 
-        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters);
+        AtlasSearchResult res = discoveryREST.searchWithParameters(searchParameters, "account-id");
 
         Assert.assertNotNull(res.getEntities());
         Assert.assertEquals(res.getEntities().size(), 7);

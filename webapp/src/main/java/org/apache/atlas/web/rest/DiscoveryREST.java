@@ -17,28 +17,10 @@
  */
 package org.apache.atlas.web.rest;
 
-import org.apache.atlas.AtlasClient;
-import org.apache.atlas.AtlasErrorCode;
-import org.apache.atlas.SortOrder;
-import org.apache.atlas.annotation.Timed;
-import org.apache.atlas.authorize.AtlasAuthorizationUtils;
-import org.apache.atlas.discovery.AtlasDiscoveryService;
-import org.apache.atlas.discovery.EntityDiscoveryService;
-import org.apache.atlas.exception.AtlasBaseException;
-import org.apache.atlas.model.discovery.*;
-import org.apache.atlas.model.discovery.SearchParameters.FilterCriteria;
-import org.apache.atlas.model.profile.AtlasUserSavedSearch;
-import org.apache.atlas.repository.Constants;
-import org.apache.atlas.type.AtlasEntityType;
-import org.apache.atlas.type.AtlasStructType;
-import org.apache.atlas.type.AtlasTypeRegistry;
-import org.apache.atlas.utils.AtlasPerfTracer;
-import org.apache.atlas.web.util.Servlets;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.springframework.stereotype.Service;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -54,9 +36,34 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+
+import org.apache.atlas.AtlasClient;
+import org.apache.atlas.AtlasErrorCode;
+import org.apache.atlas.RequestContext;
+import org.apache.atlas.SortOrder;
+import org.apache.atlas.annotation.Timed;
+import org.apache.atlas.authorize.AtlasAuthorizationUtils;
+import org.apache.atlas.discovery.AtlasDiscoveryService;
+import org.apache.atlas.discovery.EntityDiscoveryService;
+import org.apache.atlas.exception.AtlasBaseException;
+import org.apache.atlas.model.discovery.AtlasQuickSearchResult;
+import org.apache.atlas.model.discovery.AtlasSearchResult;
+import org.apache.atlas.model.discovery.AtlasSuggestionsResult;
+import org.apache.atlas.model.discovery.QuickSearchParameters;
+import org.apache.atlas.model.discovery.SearchParameters;
+import org.apache.atlas.model.discovery.SearchParameters.FilterCriteria;
+import org.apache.atlas.model.profile.AtlasUserSavedSearch;
+import org.apache.atlas.repository.Constants;
+import org.apache.atlas.type.AtlasEntityType;
+import org.apache.atlas.type.AtlasStructType;
+import org.apache.atlas.type.AtlasTypeRegistry;
+import org.apache.atlas.utils.AtlasPerfTracer;
+import org.apache.atlas.web.util.Servlets;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Service;
 
 /**
  * REST interface for data discovery using dsl or full text search
@@ -187,8 +194,52 @@ public class DiscoveryREST {
      * without any results
      * @HTTP 400 Invalid fulltext or query parameters
      */
+//    @GET
+//    @Path("/basic")
+//    @Timed
+//    public AtlasSearchResult searchUsingBasic(@QueryParam("query")                  String  query,
+//                                              @QueryParam("typeName")               String  typeName,
+//                                              @QueryParam("classification")         String  classification,
+//                                              @QueryParam("sortBy")                 String    sortByAttribute,
+//                                              @QueryParam("sortOrder")              SortOrder sortOrder,
+//                                              @QueryParam("excludeDeletedEntities") boolean excludeDeletedEntities,
+//                                              @QueryParam("limit")                  int     limit,
+//                                              @QueryParam("offset")                 int     offset,
+//                                              @QueryParam("marker")                 String  marker) throws AtlasBaseException {
+//        Servlets.validateQueryParamLength("typeName", typeName);
+//        Servlets.validateQueryParamLength("classification", classification);
+//        Servlets.validateQueryParamLength("sortBy", sortByAttribute);
+//        if (StringUtils.isNotEmpty(query) && query.length() > maxFullTextQueryLength) {
+//            throw new AtlasBaseException(AtlasErrorCode.INVALID_QUERY_LENGTH, Constants.MAX_FULLTEXT_QUERY_STR_LENGTH);
+//        }
+//
+//        AtlasPerfTracer perf = null;
+//
+//        try {
+//            if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
+//                perf = AtlasPerfTracer.getPerfTracer(PERF_LOG, "DiscoveryREST.searchUsingBasic(" + query + "," +
+//                        typeName + "," + classification + "," + limit + "," + offset + ")");
+//            }
+//
+//            SearchParameters searchParameters = new SearchParameters();
+//            searchParameters.setTypeName(typeName);
+//            searchParameters.setClassification(classification);
+//            searchParameters.setQuery(query);
+//            searchParameters.setExcludeDeletedEntities(excludeDeletedEntities);
+//            searchParameters.setLimit(limit);
+//            searchParameters.setOffset(offset);
+//            searchParameters.setMarker(marker);
+//            searchParameters.setSortBy(sortByAttribute);
+//            searchParameters.setSortOrder(sortOrder);
+//
+//            return discoveryService.searchWithParameters(searchParameters);
+//        } finally {
+//            AtlasPerfTracer.log(perf);
+//        }
+//    }
+
     @GET
-    @Path("/basic")
+    @Path("/basic/account_id/{accountID}")
     @Timed
     public AtlasSearchResult searchUsingBasic(@QueryParam("query")                  String  query,
                                               @QueryParam("typeName")               String  typeName,
@@ -198,7 +249,8 @@ public class DiscoveryREST {
                                               @QueryParam("excludeDeletedEntities") boolean excludeDeletedEntities,
                                               @QueryParam("limit")                  int     limit,
                                               @QueryParam("offset")                 int     offset,
-                                              @QueryParam("marker")                 String  marker) throws AtlasBaseException {
+                                              @QueryParam("marker")                 String  marker,
+                                              @PathParam("accountID")               String  accountID) throws AtlasBaseException {
         Servlets.validateQueryParamLength("typeName", typeName);
         Servlets.validateQueryParamLength("classification", classification);
         Servlets.validateQueryParamLength("sortBy", sortByAttribute);
@@ -214,7 +266,20 @@ public class DiscoveryREST {
                         typeName + "," + classification + "," + limit + "," + offset + ")");
             }
 
+            RequestContext.get().setAccountID(accountID);
+
+            SearchParameters.FilterCriteria filterCriteria = new SearchParameters.FilterCriteria();
+            filterCriteria.setCondition(FilterCriteria.Condition.AND);
+            SearchParameters.FilterCriteria filterCriteria1 = new SearchParameters.FilterCriteria();
+            filterCriteria1.setAttributeName("accountID");
+            filterCriteria1.setOperator(SearchParameters.Operator.EQ);
+            filterCriteria1.setAttributeValue(accountID);
+            List<FilterCriteria> criteriaList = new ArrayList<>();
+            criteriaList.add(filterCriteria1);
+            filterCriteria.setCriterion(criteriaList);
+
             SearchParameters searchParameters = new SearchParameters();
+            searchParameters.setEntityFilters(filterCriteria);
             searchParameters.setTypeName(typeName);
             searchParameters.setClassification(classification);
             searchParameters.setQuery(query);
@@ -246,18 +311,20 @@ public class DiscoveryREST {
      * @HTTP 400 Invalid wildcard or query parameters
      */
     @GET
-    @Path("/attribute")
+    @Path("/attribute/account_id/{accountID}")
     @Timed
     public AtlasSearchResult searchUsingAttribute(@QueryParam("attrName")        String attrName,
                                                   @QueryParam("attrValuePrefix") String attrValuePrefix,
                                                   @QueryParam("typeName")        String typeName,
                                                   @QueryParam("limit")           int    limit,
-                                                  @QueryParam("offset")          int    offset) throws AtlasBaseException {
+                                                  @QueryParam("offset")          int    offset,
+                                                  @PathParam("accountID")       String accountID) throws AtlasBaseException {
         Servlets.validateQueryParamLength("attrName", attrName);
         Servlets.validateQueryParamLength("attrValuePrefix", attrValuePrefix);
         Servlets.validateQueryParamLength("typeName", typeName);
 
         AtlasPerfTracer perf = null;
+        RequestContext.get().setAccountID(accountID);
 
         try {
             if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
@@ -293,18 +360,31 @@ public class DiscoveryREST {
             }
 
             SearchParameters searchParams = new SearchParameters();
-            FilterCriteria   attrFilter   = new FilterCriteria();
 
-            attrFilter.setAttributeName(StringUtils.isEmpty(attrName) ? AtlasClient.QUALIFIED_NAME : attrName);
-            attrFilter.setOperator(SearchParameters.Operator.STARTS_WITH);
-            attrFilter.setAttributeValue(attrValuePrefix);
+            FilterCriteria filterCriteria = new FilterCriteria();
+            filterCriteria.setCondition(FilterCriteria.Condition.AND);
+
+            FilterCriteria filterCriteria1 = new FilterCriteria();
+            filterCriteria1.setAttributeName("accountID");
+            filterCriteria1.setOperator(SearchParameters.Operator.EQ);
+            filterCriteria1.setAttributeValue(accountID);
+
+            FilterCriteria filterCriteria2   = new FilterCriteria();
+            filterCriteria2.setAttributeName(StringUtils.isEmpty(attrName) ? AtlasClient.QUALIFIED_NAME : attrName);
+            filterCriteria2.setOperator(SearchParameters.Operator.STARTS_WITH);
+            filterCriteria2.setAttributeValue(attrValuePrefix);
+
+            List<FilterCriteria> criteriaList = new ArrayList<>();
+            criteriaList.add(filterCriteria1);
+            criteriaList.add(filterCriteria2);
+            filterCriteria.setCriterion(criteriaList);
 
             searchParams.setTypeName(typeName);
-            searchParams.setEntityFilters(attrFilter);
+            searchParams.setEntityFilters(filterCriteria);
             searchParams.setOffset(offset);
             searchParams.setLimit(limit);
 
-            return searchWithParameters(searchParams);
+            return searchWithParameters(searchParams, accountID);
         } finally {
             AtlasPerfTracer.log(perf);
         }
@@ -319,11 +399,13 @@ public class DiscoveryREST {
      * @HTTP 200 On successful search
      * @HTTP 400 Tag/Entity doesn't exist or Tag/entity filter is present without tag/type name
      */
-    @Path("basic")
+    @Path("basic/account_id/{accountID}")
     @POST
     @Timed
-    public AtlasSearchResult searchWithParameters(SearchParameters parameters) throws AtlasBaseException {
+    public AtlasSearchResult searchWithParameters(SearchParameters parameters,
+                                                  @PathParam("accountID") String accountID) throws AtlasBaseException {
         AtlasPerfTracer perf = null;
+        RequestContext.get().setAccountID(accountID);
 
         try {
             if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
@@ -349,6 +431,20 @@ public class DiscoveryREST {
 
             validateSearchParameters(parameters);
 
+            FilterCriteria filterCriteria = new FilterCriteria();
+            filterCriteria.setCondition(FilterCriteria.Condition.AND);
+
+            FilterCriteria filterCriteria1 = new FilterCriteria();
+            filterCriteria1.setAttributeName("accountID");
+            filterCriteria1.setOperator(SearchParameters.Operator.EQ);
+            filterCriteria1.setAttributeValue(accountID);
+
+            List<FilterCriteria> criteriaList = parameters.getEntityFilters().getCriterion();
+            criteriaList.add(filterCriteria1);
+            filterCriteria.setCriterion(criteriaList);
+
+            parameters.setEntityFilters(filterCriteria);
+
             return discoveryService.searchWithParameters(parameters);
         } finally {
             AtlasPerfTracer.log(perf);
@@ -371,7 +467,7 @@ public class DiscoveryREST {
      * @HTTP 400 guid is not a valid entity type or attributeName is not a valid relationship attribute
      */
     @GET
-    @Path("relationship")
+    @Path("relationship/account_id/{accountID}")
     @Timed
     public AtlasSearchResult searchRelatedEntities(@QueryParam("guid")                            String      guid,
                                                    @QueryParam("relation")                        String      relation,
@@ -382,12 +478,15 @@ public class DiscoveryREST {
                                                    @QueryParam("includeClassificationAttributes") boolean     includeClassificationAttributes,
                                                    @QueryParam("getApproximateCount")             boolean     getApproximateCount,
                                                    @QueryParam("limit")                           int         limit,
-                                                   @QueryParam("offset")                          int         offset) throws AtlasBaseException {
+                                                   @QueryParam("offset")                          int         offset,
+                                                   @PathParam("accountID")                        String      accountID) throws AtlasBaseException {
         Servlets.validateQueryParamLength("guid", guid);
         Servlets.validateQueryParamLength("relation", relation);
         Servlets.validateQueryParamLength("sortBy", sortByAttribute);
 
         AtlasPerfTracer perf = null;
+
+        RequestContext.get().setAccountID(accountID);
 
         try {
             if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
@@ -396,6 +495,21 @@ public class DiscoveryREST {
             }
 
             SearchParameters parameters = new SearchParameters();
+
+            FilterCriteria filterCriteria = new FilterCriteria();
+            filterCriteria.setCondition(FilterCriteria.Condition.AND);
+
+            FilterCriteria filterCriteria1 = new FilterCriteria();
+            filterCriteria1.setAttributeName("accountID");
+            filterCriteria1.setOperator(SearchParameters.Operator.EQ);
+            filterCriteria1.setAttributeValue(accountID);
+
+            List<FilterCriteria> criteriaList = new ArrayList<>();
+            criteriaList.add(filterCriteria1);
+            filterCriteria.setCriterion(criteriaList);
+
+            parameters.setEntityFilters(filterCriteria);
+
             parameters.setAttributes(attributes);
             parameters.setSortBy(sortByAttribute);
             parameters.setSortOrder(sortOrder);
@@ -603,7 +717,7 @@ public class DiscoveryREST {
      * @HTTP 200 On successful search
      * @HTTP 400 Tag/Entity doesn't exist or Tag/entity filter is present without tag/type name
      */
-    @Path("/quick")
+    @Path("/quick/account_id/{accountID}")
     @GET
     @Timed
     public AtlasQuickSearchResult quickSearch(@QueryParam("query")                  String    query,
@@ -612,10 +726,11 @@ public class DiscoveryREST {
                                               @QueryParam("offset")                 int       offset,
                                               @QueryParam("limit")                  int       limit,
                                               @QueryParam("sortBy")                 String    sortByAttribute,
-                                              @QueryParam("sortOrder")              SortOrder sortOrder) throws AtlasBaseException {
+                                              @QueryParam("sortOrder")              SortOrder sortOrder,
+                                              @PathParam("accountID")               String accountID) throws AtlasBaseException {
 
 
-
+        RequestContext.get().setAccountID(accountID);
         if (StringUtils.isNotEmpty(query) && query.length() > maxFullTextQueryLength) {
             throw new AtlasBaseException(AtlasErrorCode.INVALID_QUERY_LENGTH, Constants.MAX_FULLTEXT_QUERY_STR_LENGTH);
         }
@@ -628,9 +743,21 @@ public class DiscoveryREST {
                         "excludeDeletedEntities:" + excludeDeletedEntities + "," + limit + "," + offset + ")");
             }
 
+            FilterCriteria filterCriteria = new FilterCriteria();
+            filterCriteria.setCondition(FilterCriteria.Condition.AND);
+
+            FilterCriteria filterCriteria1 = new FilterCriteria();
+            filterCriteria1.setAttributeName("accountID");
+            filterCriteria1.setOperator(SearchParameters.Operator.EQ);
+            filterCriteria1.setAttributeValue(accountID);
+
+            List<FilterCriteria> criteriaList = new ArrayList<>();
+            criteriaList.add(filterCriteria1);
+            filterCriteria.setCriterion(criteriaList);
+
             QuickSearchParameters quickSearchParameters = new QuickSearchParameters(query,
                                                                                     typeName,
-                                                                                    null,  // entityFilters
+                                                                                    filterCriteria,  // entityFilters
                                                                                     false, // includeSubTypes
                                                                                     excludeDeletedEntities,
                                                                                     offset,
@@ -652,11 +779,13 @@ public class DiscoveryREST {
      * @HTTP 200 On successful search
      * @HTTP 400 Entity/attribute doesn't exist or entity filter is present without type name
      */
-    @Path("/quick")
+    @Path("/quick/account_id/{accountID}")
     @POST
     @Timed
-    public AtlasQuickSearchResult quickSearch(QuickSearchParameters quickSearchParameters) throws AtlasBaseException {
+    public AtlasQuickSearchResult quickSearch(QuickSearchParameters quickSearchParameters,
+                                              @PathParam("accountID")           String   accountID) throws AtlasBaseException {
         AtlasPerfTracer perf = null;
+        RequestContext.get().setAccountID(accountID);
 
         try {
             if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
@@ -684,17 +813,35 @@ public class DiscoveryREST {
 
             validateSearchParameters(quickSearchParameters);
 
+            FilterCriteria filterCriteria = new FilterCriteria();
+            filterCriteria.setCondition(FilterCriteria.Condition.AND);
+
+            FilterCriteria filterCriteria1 = new FilterCriteria();
+            filterCriteria1.setAttributeName("accountID");
+            filterCriteria1.setOperator(SearchParameters.Operator.EQ);
+            filterCriteria1.setAttributeValue(accountID);
+
+            List<FilterCriteria> criteriaList = quickSearchParameters.getEntityFilters().getCriterion();
+            criteriaList.add(filterCriteria1);
+            filterCriteria.setCriterion(criteriaList);
+
+            quickSearchParameters.setEntityFilters(filterCriteria);
+
             return discoveryService.quickSearch(quickSearchParameters);
         } finally {
             AtlasPerfTracer.log(perf);
         }
     }
 
-    @Path("suggestions")
+    @Path("suggestions/account_id/{accountID}")
     @GET
     @Timed
-    public AtlasSuggestionsResult getSuggestions(@QueryParam("prefixString") String prefixString, @QueryParam("fieldName") String fieldName) {
+    public AtlasSuggestionsResult getSuggestions(@QueryParam("prefixString") String prefixString,
+                                                 @QueryParam("fieldName") String fieldName,
+                                                 @PathParam("accountID") String accountID) {
         AtlasPerfTracer perf = null;
+
+        RequestContext.get().setAccountID(accountID);
 
         try {
             if (AtlasPerfTracer.isPerfTraceEnabled(PERF_LOG)) {
